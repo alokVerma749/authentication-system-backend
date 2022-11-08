@@ -42,7 +42,10 @@ app.post('/user/register', async (req, res) => {
         if (existingUser) {
             res.status(401).send("User already found in database")
         }
-
+        const mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+        if (!(email.match(mailformat))) {
+            res.status(400).send('enter valid email address')
+        }
         // encrypt the password
         const encry_password = await bcrypt.hash(password, 10);
 
@@ -83,6 +86,9 @@ app.post('./login', async (req, res) => {
 
         if (!(email && password)) {
             res.status(401).send('both fields are mandatory')
+        }
+        if (!(email.match(mailformat))) {
+            res.status(400).send('enter valid email address')
         }
         const user = await User.findOne({ email })
 
