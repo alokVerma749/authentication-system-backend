@@ -80,32 +80,37 @@ app.post('/user/register', async (req, res) => {
 
 
 // Login route
-app.post('./login', async (req, res) => {
+app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body
 
         if (!(email && password)) {
             res.status(401).send('both fields are mandatory')
         }
+        const mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
         if (!(email.match(mailformat))) {
             res.status(400).send('enter valid email address')
         }
+
         const user = await User.findOne({ email })
-
-        // if (!(user)) {
-        //     res.status(401).send('user is not signed up')
-        // }
-
         // check is user exists and entered password is correct
         if (user && (await bcrypt.compare(password, user.password))) {
             // create token
             const token = jwt.sign({ id: user._id, email }, 'shhhhh', { expiresIn: '2h' })
             user.token = token
             user.password = undefined
-            // TODO: save token to the cookie
-            res.status(201).json({ user })
+            // save token to the cookie
+            const options = {
+                expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+                httpOnly: true
+            }
+            res.status(200).cookie("token", token, options).json({
+                success: true,
+                token,
+                user
+            })
         }
-
+        res.status(400).send("email or password is incorrect")
     } catch (error) {
         console.log(error)
         console.log('/login route not responding')
